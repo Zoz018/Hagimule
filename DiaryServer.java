@@ -12,7 +12,7 @@ public class DiaryServer {
             System.out.println("Le serveur de l'annuaire tourne...");
         } catch (RemoteException e) {
             e.printStackTrace();
-        }
+        }   
 
     }
 }

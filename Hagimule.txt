@@ -1,0 +1,5 @@
+Hagimule est une application qui doit permettre le téléchargement de plusieurs fichier lorsque plusieurs client 
+qui possède le même fichier sont connecté simultanément. Ainsi plus de client possède un fichier plus on augmente 
+la vitesse de téléchargement de celui-ci. 
+
+L'application se composent de plusieur classe en java dont le rôle va être expliqué : 
