@@ -13,6 +13,7 @@ Les classes Diary qui font la gestion de l'annuaire :
 
 - DiaryServer.java : Utilise l'implémentation de l'annuaire pour qu'il fonctionne comme un serveur sur le port 8080
 
+
 La classe Daemon :
 
 - Dans le main on créé un Daemon et on le lance avec la méthode start
