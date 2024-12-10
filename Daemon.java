@@ -3,22 +3,27 @@ import java.net.*;
 
 public class Daemon {
     private static final int PORT = 8080;
-    
     public static void main(String[] args) {
-        //Initialisation du serveur sur le port 8080
-        try (ServerSocket serverSocket = new ServerSocket(PORT)){
+        Daemon daemon = new Daemon();
+        daemon.start();
+}
+
+    public void start(){
+         //Initialisation du serveur sur le port 8080
+         try (ServerSocket serverSocket = new ServerSocket(PORT)){
             //Debug
             System.out.println("Daemon en cours ... " + PORT);
             while (true) {
                 //Attente de connexion d'un client
                 Socket socket = serverSocket.accept();
                 //Démarrage d'un thread pour gérer la connexion avec le client 
-                new Thread(new FileHandler(socket)).start();
+                FileHandler fileHandler = new FileHandler(socket);
+                new Thread(fileHandler).start();
             }        
         } catch (IOException e){
             e.printStackTrace();
         }
-}
+    }
 
 // Pour le client, on peut utiliser le code suivant pour envoyer un fichier au serveur
 class FileHandler implements Runnable {

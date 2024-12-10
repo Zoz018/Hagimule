@@ -1,5 +1,19 @@
-Hagimule est une application qui doit permettre le téléchargement de plusieurs fichier lorsque plusieurs client 
-qui possède le même fichier sont connecté simultanément. Ainsi plus de client possède un fichier plus on augmente 
-la vitesse de téléchargement de celui-ci. 
+Hagimule est une application qui doit permettre le téléchargement de plusieurs fichiers lorsque plusieurs client 
+qui possède le même fichier sont connectés simultanément. Ainsi plus il y a de client qui possède un fichier plus 
+on augmente la vitesse de téléchargement de celui-ci.
 
-L'application se composent de plusieur classe en java dont le rôle va être expliqué : 
+L'application se composent de plusieur classe en java dont les rôles vont être expliqué ici:
+
+Les classes Diary qui font la gestion de l'annuaire : 
+
+- DiaryInterface.java : description de l'interface de l'annuaire avec les méthode permettant d'enregistrer les fichiers 
+                        des clients et de récupérer la liste des clients qui possède un fichier  
+
+- DiaryImpl.java : Implémentation de l'interface de l'annuaire avec RMI 
+
+- DiaryServer.java : Utilise l'implémentation de l'annuaire pour qu'il fonctionne comme un serveur sur le port 8080
+
+La classe Daemon :
+
+- s 
+

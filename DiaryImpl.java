@@ -11,7 +11,7 @@ public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
         this.fileMap = new HashMap<>(); //Initialisation de L'annuaire 
     }
 
-    //Les méthodes sont synchronisées dans le cas où plusieur client change ou accède à l'annuaire en même temps par exemple 
+    //Les méthodes sont synchronisées dans le cas où plusieurs clients changent ou accèdent à l'annuaire en même temps par exemple 
     @Override
     public synchronized void registerFile(String clientID, String fileName) throws RemoteException {
         //On ajoute le fichier au client si le fichier existe sinon on met en place une liste vide qui contiendra les clients
