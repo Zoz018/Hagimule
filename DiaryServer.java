@@ -13,6 +13,5 @@ public class DiaryServer {
         } catch (RemoteException e) {
             e.printStackTrace();
         }   
-
     }
 }
