@@ -9,6 +9,7 @@ public class Downloader {
 
     //Méthode pour télécharger un fichier à partir de plusieurs clients
     public void download(String[] clients, String fileName, long fileSize) throws IOException {
+
         //Calcul de la taille de chaque fragment
         long fragmentSize = fileSize / clients.length;
         try {
@@ -29,7 +30,7 @@ public class Downloader {
                 //On stocke le numéro du client courant
                 int finalI = i;
                 //Pour chaque client on télécharge le fragment.
-                executor.submit(() -> downloadFragment(clients[finalI], fileName, offset, length));
+                executor.submit(() -> downloadFragments(clients[finalI], fileName, offset, length));
             }
 
             //Pour que l'executor ne prennent plus de tâche j'usqu'à la fin des autres tâches
@@ -37,12 +38,42 @@ public class Downloader {
             //On attend que les tâches soient terminé ou que le temps soit terminé (ici 1 heure (à modifier surement))
             executor.awaitTermination(1, TimeUnit.HOURS);
 
-            //Fusion des fragments pour avoir le fichier complet
-            mergeFragments(fileName, clients.length);
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }  
+
+    public void downloadFragments(String client, String fileName, long offset, long length) {
+            try (Socket socket = new Socket(client, Daemon.PORT);
+                 DataInputStream in = new DataInputStream(socket.getInputStream());
+                 RandomAccessFile raf = new RandomAccessFile(fileName, "rw")) {
+        
+                // Envoi de la requête au daemon
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                out.writeUTF(fileName);
+                out.writeLong(offset);
+                out.writeInt(Math.toIntExact(length));
+    
+            // Vérifier si le fichier est accessible
+            if (!in.readBoolean()) {
+                System.err.println("Fragment non disponible");
+                return;
+            }
+    
+            // Lecture des données reçues
+            int fragmentSize = in.readInt();
+            byte[] buffer = new byte[fragmentSize];
+            in.readFully(buffer);
+    
+            // Écriture directe dans le fichier à l'emplacement approprié
+            raf.seek(offset);
+            raf.write(buffer);
+    
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+
 }
 

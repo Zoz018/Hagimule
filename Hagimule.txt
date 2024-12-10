@@ -15,5 +15,6 @@ Les classes Diary qui font la gestion de l'annuaire :
 
 La classe Daemon :
 
-- s 
+- Dans le main on créé un Daemon et on le lance avec la méthode start
 
+- La méthode start lance un Daemon qui permet la lecture des fichiers avec la méthode FileHandler

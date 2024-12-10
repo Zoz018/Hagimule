@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 
 public class Daemon {
-    private static final int PORT = 8080;
+    public static final int PORT = 8080;
     public static void main(String[] args) {
         Daemon daemon = new Daemon();
         daemon.start();
@@ -43,7 +43,7 @@ class FileHandler implements Runnable {
             
             //Lecture du nom du fichier
             String fileName = in.readUTF();
-            //Lecture du decalage 
+            //Lecture du decalage (point de départ de lecture)
             long offset = in.readLong();
             //Lecture de la longueur du fichier
             int length = in.readInt();
@@ -65,7 +65,7 @@ class FileHandler implements Runnable {
                 //Lecture du fichier
                 raf.read(buffer);
 
-                //Envoi du fichier au client avec la taille du fichier
+                //Envoie de la taille du fichier au client et du fichier 
                 out.writeInt(buffer.length);
                 out.write(buffer);
             }
