@@ -5,17 +5,52 @@ on augmente la vitesse de téléchargement de celui-ci.
 L'application se composent de plusieur classe en java dont les rôles vont être expliqué ici:
 
 Les classes Diary qui font la gestion de l'annuaire : 
-
 - DiaryInterface.java : description de l'interface de l'annuaire avec les méthode permettant d'enregistrer les fichiers 
                         des clients et de récupérer la liste des clients qui possède un fichier  
-
+    - TODO (rajouter taille de fichier) registerFile : enregistre un fichier dans l'annuiare avec les clients qui le possède ainsi que la taille du fichier
+    - getClient : récupère la liste des clients qui possède un fichier à partir d'un nom de fichier
+    - TODO : La méthode getAllClient : récupère la liste de tous les clients 
 - DiaryImpl.java : Implémentation de l'interface de l'annuaire avec RMI 
+    TODO : implémenter DiaryInterface
+- DiaryServer.java : main utilise l'implémentation de l'annuaire pour qu'il fonctionne comme un serveur sur le port 1099
+    - main : crée le diary, le met sur le serveur (les daemons peuvent alors récupérer l'annuiare grace au nom de port)
 
-- DiaryServer.java : Utilise l'implémentation de l'annuaire pour qu'il fonctionne comme un serveur sur le port 8080
+
+La classe Daemon : TODO repartir à zéro
+- Dans le main on créé un Daemon, on le lance et on lance la méthode registerCustomer
+- La méthode registerCustomer permet d'enregistrer un Client=Daemon dans l'annuaire (ses fichers etc ...)
 
 
-La classe Daemon :
 
-- Dans le main on créé un Daemon et on le lance avec la méthode start
+TODO :
+- Dans l'idée modifier la classe downloader en modifiant le nom downloader par main (pour le lancer automatiquement) et garder downlodFragmennt
+- Modifier l'entrée du diary <List[Clients],fileSize> (on ajoute le fileSize)
+- créer une fonction qui récupère tous les clients de l'annuaire dans la classe DiaryImpl
+- ajouter une fonction qui permet d'enregistrer pour chaque daemon le client (un client = un daemon = une machine)
+- créer les fichiers de test
+- créer un fichier makefile et mettre :     
+    - lance la classe Serveur qui crée l'annuaire en RMI
+    - créer les daemons (penser à se connecter se connecter)
+Bonus :
+- Rajouter dans l'annuaire le client qui vient de télécharger le fichier (dans la classe Downloader) c'est à dire la machine que l'on utilise pour lancer le projet si il veut devenir hébergeur
 
-- La méthode start lance un Daemon qui permet la lecture des fichiers avec la méthode FileHandler
+
+Etapes de fonctionnement : 
+- Se connecter en ssh sur plusieurs machine = ça crée différents daemon qui possède alors automatiquement tous les fichiers de tests (MAKEFILE)
+- On ajoute ces daemons dans l'annuaire qui possèdent donc tous les fichiers de test (se fait automatiquement grace au main du daemon)
+- On lance le téléchargement d'un fichier (MAKEILE)
+    - On récupère la liste des clients (DOWNLOADER : main)
+    - On fractionne la taille en fonction du nombre de client (DOWNLOADER : main)
+    - On écrit dans un nouveau fichier sur la machine qui lance le projet, les fractions de fichier (penser à les mettre dans l'ordre) (DOWNLOADER : main qui utilise downloadFragments)
+        - Quand on demande à un daemon de télécharger une certaine zone de fichier, on connaît cette zone et donc dès que le thread a fini on écrit 
+          dans la zone du nouveau fichier 
+        - PS : on peut écrire par exemple de l'octet 5 à 10 même si le fichier initial est vide (les octets 0 à 5 ne sont juste pas initialisés)
+
+
+Fonctionnement des fichiers/daemons :
+- On se connecte en ssh sur une autre machine
+- Les fichiers tests sont donc sur cette machine (Dans un dossier fichierTest par exemple)
+- On crée un daemon sur cette machine
+- Ce daemon possède alors les fichiers de test présent dans le dossier dossierFichierTest
+- Lorsque l'on crée le daemon, on va aller regarder le dossier dossierFichierTest et récupérer les fichiers présents pour les enregistrer avec le daemon dans l'annuaire
+- Donc chaque daemon = une machine = un client = une connection ssh ...

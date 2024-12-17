@@ -1,15 +1,19 @@
 import java.io.*;
 import java.net.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.util.Map;
+import java.util.logging.FileHandler;
 
 public class Daemon {
-    public static final int PORT = 8080;
+    public static final int PORT = 1099;
     public static void main(String[] args) {
         Daemon daemon = new Daemon();
         daemon.start();
 }
 
     public void start(){
-         //Initialisation du serveur sur le port 8080
+         //Initialisation du serveur sur le port 1099
          try (ServerSocket serverSocket = new ServerSocket(PORT)){
             //Debug
             System.out.println("Daemon en cours ... " + PORT);
@@ -23,6 +27,16 @@ public class Daemon {
         } catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+    public void registerCustomer(){
+        // Connexion à l'annuaire RMI qui se trouve sur le port 1099
+            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+        // Recherche de l'objet "Annuaire" dans l'annuaire RMI
+            DiaryImpl diary = (DiaryImpl) registry.lookup("Annuaire");
+        // Récupérer les valeurs dans le diary
+        for (Map.Entry<String, String> entry : .entrySet()) {
+            String value = entry.getValue();
     }
 
 // Pour le client, on peut utiliser le code suivant pour envoyer un fichier au serveur
