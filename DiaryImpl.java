@@ -1,10 +1,12 @@
 import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.rmi.RemoteException;
 
 public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
     //Annuaire de la forme : fileMap = { "fileName1" : ([Client1] , taille), "fileName2" : ([Client1, Client2], taille) }
     public final Map<String, Map.Entry<List<String>, Long>> fileRegistry;
-    private ArrayList<>() allClients;
+    private ArrayList<String> allClients;
 
 
     public static void main(String[] args){
