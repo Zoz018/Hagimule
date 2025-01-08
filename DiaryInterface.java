@@ -3,9 +3,16 @@ import java.util.List;
 
 //Interface RMI de l'annuaire 
 public interface DiaryInterface extends Remote {
-    //Méthode qui permet d'enregistrer les fichiers des cients dans l'annuaire
-    public void registerFile(String clientID, String fileName) throws RemoteException; 
+    //Méthode qui permet d'ajouter le nom d'un client lorsque celui-ci possède le fichier
+    public void registerFile(String client, String fileName, Long fileSize) throws RemoteException; 
 
-    //Méthode la liste des client qui possède le fichier
-    List<String> getClient(String fileName ) throws RemoteException; 
+    //Méthode qui récupère la liste des client qui possède le fichier
+    List<String> getClients(String fileName ); 
+
+    //Méthode qui récupère la liste de l'ensemble des clients
+    List<String> getAllClients() throws RemoteException; 
+
+    //Méthode qui récupère la taille d'un fichier
+    long getFileSize(String fileName) throws RemoteException;
+
 }

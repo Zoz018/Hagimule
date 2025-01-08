@@ -3,27 +3,54 @@ import java.rmi.*;
 import java.util.*;
 
 public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
-    //Annuaire de la forme : fileMap = { "fileName1" : [Client1] , "fileName2" : [Client1, Client2] }
-    private final Map<String,List<String>> fileMap;
+    //Annuaire de la forme : fileMap = { "fileName1" : ([Client1] , taille), "fileName2" : ([Client1, Client2], taille) }
+    public final Map<String, Map.Entry<List<String>, Long>> fileRegistry;
     
     public DiaryImpl() throws RemoteException{
         super(); //Pour initialiser la super classe URO
-        this.fileMap = new HashMap<>(); //Initialisation de L'annuaire 
-    }
-
-    //Les méthodes sont synchronisées dans le cas où plusieurs clients changent ou accèdent à l'annuaire en même temps par exemple 
-    @Override
-    public synchronized void registerFile(String clientID, String fileName) throws RemoteException {
-        //On ajoute le fichier au client si le fichier existe sinon on met en place une liste vide qui contiendra les clients
-        fileMap.computeIfAbsent(fileName, k -> new ArrayList<>()).add(clientID);
-        //Debugage
-        System.out.println("Le fichier " + fileName + " à été enregistrer par le client " + clientID);
+        this.fileRegistry = new HashMap<>(); //Initialisation de L'annuaire 
     }
 
     @Override
-    public synchronized List<String> getClient(String fileName) throws RemoteException {
-        //On renvoie les noms des clients qui possède le fichier et une liste vide sinon
-        return fileMap.getOrDefault(fileName , Collections.emptyList());
+    public void registerFile(String client, String fileName, Long fileSize) throws RemoteException {
+        // Vérifie si le fichier existe déjà dans l'annuaire
+        if (fileRegistry.containsKey(fileName)) {
+            List<String> ClientList = new ArrayList<>();
+            ClientList = getClients(fileName);
+            ClientList.add(client); // Ajoute le client actuel
+            fileRegistry.put(fileName, new AbstractMap.SimpleEntry<>(ClientList, fileSize));
+        } else {
+            // Si le fichier n'existe pas, on crée une nouvelle entrée
+            List<String> newClientList = new ArrayList<>();
+            newClientList.add(client); // Ajoute le client actuel
+            fileRegistry.put(fileName, new AbstractMap.SimpleEntry<>(newClientList, fileSize));
+        }
+    }
+
+    @Override
+    public List<String> getClients(String fileName) {
+        // Retourne la liste des clients pour un fichier donné, ou une liste vide si le fichier n'existe pas.
+        return fileRegistry.containsKey(fileName) ? fileRegistry.get(fileName).getKey() : new ArrayList<>();
+    }
+
+    @Override
+    public List<String> getAllClients() throws RemoteException {
+        Set<String> allClients = new HashSet<>();  // Utilise un Set pour éviter les doublons.
+
+        // Ajoute tous les clients de chaque fichier à la collection.
+        for (Map.Entry<List<String>, Long> entry : fileRegistry.values()) {
+            allClients.addAll(entry.getKey());
+        }
+        return new ArrayList<>(allClients); // Convertit le Set en liste avant de le retourner
+    }
+
+    @Override
+    public long getFileSize(String fileName) throws RemoteException {
+        if (fileRegistry.containsKey(fileName)) { 
+            return fileRegistry.get(fileName).getValue(); 
+        } else {
+            throw new IllegalArgumentException("Le fichier '" + fileName + "' n'existe pas dans l'annuaire.");
+        }
     }
    
 }   

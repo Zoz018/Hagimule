@@ -1,52 +1,69 @@
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.*;
+import java.rmi.Naming; // Pour rechercher l'annuaire RMI.
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile; // Pour manipuler un fichier de sortie.
+import java.net.Socket;
+import java.util.List; // Pour gérer des listes.
 
+public class Downloader extends Thread {
 
-public class Downloader {
-    //ExecutorService pour gérer les threads (ici 4 threads à changer selon les performances de Hagimule)
-    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    //crée dowloader pour chaque fragment qui se lance avec run (remplace dowlaodfrgmet) (thread.start())
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("Usage: java Downloader <fileName> <outputPath>");
+            return;
+        }
 
-    //Méthode pour télécharger un fichier à partir de plusieurs clients
-    public void download(String[] clients, String fileName, long fileSize) throws IOException {
+        String fileName = args[0]; // Récupère le nom du fichier à télécharger
+        String outputPath = args[1]; // Récupère le chemin du fichier de sortie
 
-        //Calcul de la taille de chaque fragment
-        long fragmentSize = fileSize / clients.length;
         try {
-            for (int i = 0; i < clients.length; i++) {
-                //On applique un décallage à chaque itération pour télécharger la bonne partie du fichier
-                long offset = i * fragmentSize;
-                //Calcul de la taille du fragment que l'on doit télécharger
-                long length;
-                //On regarde si le client est le dernier de la liste
-                if (i == clients.length - 1){
-                    //Si oui la taille du dernier fragment n'est surement pas de la taille des autres fragments
-                    length = (fileSize - offset) ;
-                }else{
-                    //Sinon on utilise la même taille que les autres fragments
-                    length = fragmentSize;
-                }
-                
-                //On stocke le numéro du client courant
-                int finalI = i;
-                //Pour chaque client on télécharge le fragment.
-                executor.submit(() -> downloadFragments(clients[finalI], fileName, offset, length));
+            DiaryInterface diary = (DiaryInterface) Naming.lookup("rmi://localhost/DiaryService"); // Recherche l'annuaire RMI
+
+            List<String> clients = diary.getClients(fileName); // Récupère la liste des clients possédant le fichier
+
+            if (clients.isEmpty()) {
+                System.out.println("No clients have the requested file.");
+                return; // Si aucun client ne possède le fichier, on quitte
             }
 
-            //Pour que l'executor ne prennent plus de tâche j'usqu'à la fin des autres tâches
-            executor.shutdown();
-            //On attend que les tâches soient terminé ou que le temps soit terminé (ici 1 heure (à modifier surement))
-            executor.awaitTermination(1, TimeUnit.HOURS);
+            long fileSize = diary.getFileSize(fileName); // Récupère la taille du fichier
 
-        } catch (InterruptedException e) {
+            long fragmentSize = fileSize / clients.size(); // Calcule la taille de chaque fragment à télécharger
+
+            RandomAccessFile outputFile = new RandomAccessFile(outputPath, "rw"); // Crée un fichier de sortie en mode lecture/écriture
+
+            outputFile.setLength(fileSize); // Réserve l'espace nécessaire pour le fichier complet
+
+            for (int i = 0; i < clients.size(); i++) {
+                long start = i * fragmentSize;
+                long end = (i == clients.size() - 1) ? fileSize : (start + fragmentSize); // Détermine les limites de chaque fragment
+
+                // Téléchargement en thread
+                final String client = clients.get(i);
+                new Thread(() -> {
+                    try {
+                        downloadFragments(client, fileName, start, end);
+                    } catch (Exception e) {
+                        System.err.println("Erreur avec le client " + client + ": " + e.getMessage());
+                    } finally {
+                        latch.countDown(); // Réduit le compteur une fois terminé
+                    }
+                }).start();
+            }
+            }
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }  
+    }
+    //Donner outputfile pour écrire e U'ON VA RECEOIR, STRAT END OK, FILENAME POUR DEMANDER AUX DAEMONS, client pour avoir la'dresse pour démarrer téléchargemeny
 
     public void downloadFragments(String client, String fileName, long offset, long length) {
-            try (Socket socket = new Socket(client, Daemon.PORT);
-                 DataInputStream in = new DataInputStream(socket.getInputStream());
-                 RandomAccessFile raf = new RandomAccessFile(fileName, "rw")) {
+            try (Socket socket = new Socket(client, Daemon.PORT); //Crée une connexion TCP avec le daemon
+                 DataInputStream in = new DataInputStream(socket.getInputStream()); //Prépare un flux pour recvoir les données du daemon
+                 RandomAccessFile raf = new RandomAccessFile(fileName, "rw")){ //Ouvre le fichier local 
         
                 // Envoi de la requête au daemon
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -62,17 +79,19 @@ public class Downloader {
     
             // Lecture des données reçues
             int fragmentSize = in.readInt();
-            byte[] buffer = new byte[fragmentSize];
+            byte[] buffer = new byte[fragmentSize]; //il faut envoyer pile fragmentSize sinon on reste bloqué
             in.readFully(buffer);
     
             // Écriture directe dans le fichier à l'emplacement approprié
-            raf.seek(offset);
-            raf.write(buffer);
-    
+            raf.seek(offset); //déplace le curseur jusqu'a l'offset
+            raf.write(buffer); //ecrire ce qu'il a dans le buffer
+
+    //gérer si erreur dans la reception (voir dans readFully)
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
 }
+
 
