@@ -7,7 +7,7 @@ public interface DiaryInterface extends Remote {
     public void registerFile(String client, String fileName, Long fileSize) throws RemoteException; 
 
     //Méthode qui récupère la liste des client qui possède le fichier
-    List<String> getClients(String fileName ); 
+    List<String> getClients(String fileName) throws RemoteException; 
 
     //Méthode qui récupère la liste de l'ensemble des clients
     List<String> getAllClients() throws RemoteException; 

@@ -1,10 +1,15 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.rmi.Naming;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 public class Downloader extends Thread {
 
@@ -13,6 +18,8 @@ public class Downloader extends Thread {
     private final long start; // Début du fragment
     private final long end; // Fin du fragment
     private final RandomAccessFile outputFile; // Fichier de sortie pour écrire les fragments
+    private static final String FILE_DIRECTORY = "/home/mbt7893/Annee_2/Hagimule/FichierTest";
+    private static final String TL_DIRECTORY = "/home/mbt7893/Annee_2/Hagimule/FichierTL"; 
 
     /**
      * Constructeur du Downloader (thread) pour télécharger un fragment.
@@ -62,27 +69,30 @@ public class Downloader extends Thread {
                 outputFile.write(buffer); // Écrit le fragment dans le fichier
             }
 
-            System.out.println("Fragment téléchargé depuis " + client + " [start=" + start + ", size=" + fragmentSize + "]");
+            System.out.println("Fragment téléchargé depuis " + client + " [start=" + start + ", size=" + fragmentSize + ", end="+end+"]");
 
         } catch (IOException e) {
-            System.err.println("Erreur lors du téléchargement depuis le client " + client + " : " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Erreur lors du téléchargement depuis le client " + client);
         }
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
+        if (args.length < 3) {
             System.out.println("Usage: java Downloader <fileName> <outputPath>");
             return;
         }
 
         String fileName = args[0]; // Nom du fichier à télécharger
         String outputPath = args[1]; // Chemin pour le fichier de sortie
+        String diary_addr = args[2];
 
         try {
             // Recherche l'annuaire RMI
-            DiaryInterface diary = (DiaryInterface) Naming.lookup("rmi://localhost/DiaryService");
+            DiaryInterface diary = (DiaryInterface) Naming.lookup("rmi://"+diary_addr+"/Annuaire");
 
+            // Ajout du chrono : capture de l'heure de début
+            long startTime = System.nanoTime();
+            
             // Récupère la liste des clients possédant le fichier
             List<String> clients = diary.getClients(fileName);
 
@@ -95,11 +105,14 @@ public class Downloader extends Thread {
             long fileSize = diary.getFileSize(fileName);
 
             // Ouvre ou crée le fichier de sortie avec la taille appropriée
-            RandomAccessFile outputFile = new RandomAccessFile(outputPath, "rw");
+            RandomAccessFile outputFile = new RandomAccessFile(outputPath+"/"+fileName, "rw");
             outputFile.setLength(fileSize); // Réserve l'espace nécessaire
 
             // Calcule la taille des fragments
             long fragmentSize = fileSize / clients.size();
+
+            // Liste pour stocker les threads
+            List<Thread> threads = new ArrayList<>();
 
             // Lance un thread pour chaque fragment
             for (int i = 0; i < clients.size(); i++) {
@@ -108,8 +121,25 @@ public class Downloader extends Thread {
 
                 // Création et démarrage du thread Downloader
                 Downloader downloader = new Downloader(clients.get(i), fileName, start, end, outputFile);
+                threads.add(downloader); // Ajoute le thread à la liste
                 downloader.start(); // Démarre le thread
             }
+
+            // Attendre que tous les threads soient terminés
+            for (Thread thread : threads) {
+                thread.join(); // Bloque jusqu'à la fin du thread
+            }
+
+            long endTime = System.nanoTime();
+            long tempsTelechargement = endTime - startTime;
+            System.out.println("Temps écoulé pour télécharger le fichier : " + tempsTelechargement / 1_000_000 + " ms");
+
+            if (outputFile.length() == fileSize) {
+                System.out.println("Fichier téléchargé dans son intégralité !");
+            } else {
+                System.out.println("Erreur lors du téléchargement : le fichier n'est pas téléchargé dans son intégralité ... ");
+            }
+
 
         } catch (Exception e) {
             System.err.println("Erreur lors du téléchargement : " + e.getMessage());

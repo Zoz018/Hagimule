@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
     //Annuaire de la forme : fileMap = { "fileName1" : ([Client1] , taille), "fileName2" : ([Client1, Client2], taille) }
     public final Map<String, Map.Entry<List<String>, Long>> fileRegistry;
-    private ArrayList<String> allClients;
 
 
     public static void main(String[] args){
@@ -29,6 +28,7 @@ public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
 
     @Override
     public void registerFile(String client, String fileName, Long fileSize) throws RemoteException {
+        System.out.println("Enregistrement");
         // Vérifie si le fichier existe déjà dans l'annuaire
         if (fileRegistry.containsKey(fileName)) {
             List<String> ClientList = new ArrayList<>();
@@ -41,6 +41,7 @@ public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
             newClientList.add(client); // Ajoute le client actuel
             fileRegistry.put(fileName, new AbstractMap.SimpleEntry<>(newClientList, fileSize));
         }
+        System.out.println(fileRegistry);
     }
 
     @Override
