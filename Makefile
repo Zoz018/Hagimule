@@ -17,7 +17,7 @@ BIN = bin
 # Liste des clients dans le réseau
 CLIENTS1 = carapuce
 CLIENTS2 = carapuce hippogriffe
-CLIENTS3 = griffon hippogriffe manticore
+CLIENTS3 = yoda hippogriffe manticore
 CLIENTS4 = carapuce hippogriffe manticore troll
 CLIENTS5 = carapuce hippogriffe manticore troll gobelin
 CLIENTS6 = carapuce hippogriffe manticore troll gobelin pixie

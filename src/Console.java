@@ -7,19 +7,16 @@ public class Console {
     private static final String DOWNLOAD_DIRECTORY = "/home/mbt7893/Annee_2/Hagimule/FichierTest"; // Dossier où se trouvent les fichiers
 
     public static void main(String[] args) {
-        Console console = new Console();
-        console.run();
+        try { 
+            Console console = new Console();
+            console.run();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
     }
 
-    public void run() {
-        Scanner scanner = new Scanner(System.in);
-
-        // Demander à l'utilisateur de choisir un groupe de clients
-        System.out.println("Veuillez choisir un nombre de machines afin de réaliser le téléchargement (entre 1 et 10):");
-
-        int nbMachinesChoisies = scanner.nextInt();
+    public String nbMachines(int nbMachinesChoisies){
         String nbMachines = "";
-
         switch (nbMachinesChoisies) {
             case 1:
                 nbMachines = "CLIENTS1";
@@ -54,15 +51,56 @@ public class Console {
             default:
                 System.out.println("Choix invalide. Utilisation par défaut d'une seule machine.");
                 nbMachines = "CLIENTS1";
-        }
+            }
+        return nbMachines;
+    } 
 
-        
+    public void run() throws Exception {
+        Scanner scanner = new Scanner(System.in);
 
-        executeDeploy(nbMachines);
+        // Demander à l'utilisateur combien de machines il veut utiliser (au début)
+        System.out.println("Veuillez choisir un nombre de machines afin de réaliser le téléchargement (entre 1 et 10) :");
+        int nbMachinesChoisies = scanner.nextInt();
+        String nbMachinesRec = nbMachines(nbMachinesChoisies);
+        executeDeploy(nbMachinesRec);
 
         boolean continueDownload = true; // Variable pour gérer la boucle de téléchargement
 
         while (continueDownload) {
+
+            // Demander à l'utilisateur de choisir un fichier
+            System.out.print("Voulez-vous changer le nombre de machines sélectionnées ? (o/n) ");
+
+            String choixMachine = scanner.next();
+
+            if (choixMachine.equalsIgnoreCase("o")) {
+                try {
+                    String commandDeploy = "make -s close";
+                    ProcessBuilder pbProcessClose = new ProcessBuilder("bash", "-c", "cd " + EXEC_DIRECTORY + " && " + commandDeploy);
+                    pbProcessClose.inheritIO(); // Affiche aussi la sortie de cette commande dans le terminal
+                    Process processClose = pbProcessClose.start();
+                    int exitCodeClose = processClose.waitFor();
+        
+                    if (exitCodeClose == 0) {
+                        System.out.println();
+                        System.out.println("Le diary et les Daemons on été fermés.");
+                    } else {
+                        System.out.println();
+                        System.out.println("Erreur lors de la fermeture du diary et des daemons.");
+                    }
+                    System.out.println("Veuillez entrer le nombre de machines : (entre 1 et 10)");
+                    nbMachinesChoisies = scanner.nextInt();
+                    nbMachinesRec = nbMachines(nbMachinesChoisies);
+                    executeDeploy(nbMachinesRec);
+                    
+                } catch (Exception e) {
+                    System.out.print(" ");
+                    System.err.println("Erreur lors de la fermeture de " + e.getMessage());
+                    e.printStackTrace();
+                }
+                
+            }
+
             // Affiche les fichiers disponibles dans le répertoire
             System.out.println();
             System.out.println("Voici les fichiers disponibles pour le téléchargement :");
@@ -80,7 +118,9 @@ public class Console {
                 }
 
                 // Demander à l'utilisateur de choisir un fichier
+
                 System.out.print("Entrez le numéro du fichier à télécharger : ");
+
                 int choice = scanner.nextInt();
 
                 if (choice > 0 && choice <= files.length) {
@@ -97,30 +137,30 @@ public class Console {
 
                     // Demander à l'utilisateur s'il veut télécharger un autre fichier
                     System.out.println();
-                    System.out.print("Voulez-vous télécharger un autre fichier ? (oui/non) : ");
+                    System.out.print("Voulez-vous télécharger un autre fichier ? (o/n) : ");
                     String response = scanner.next();
 
-                    if (response.equalsIgnoreCase("non")) {
+                    if (response.equalsIgnoreCase("n")) {
                         continueDownload = false; // Arrêter la boucle si l'utilisateur répond "non"
                         System.out.println("Exit ...");
 
                         try {
                             String commandDeploy = "make -s close";
-                                ProcessBuilder pbProcessClose = new ProcessBuilder("bash", "-c", "cd " + EXEC_DIRECTORY + " && " + commandDeploy);
-                                pbProcessClose.inheritIO(); // Affiche aussi la sortie de cette commande dans le terminal
-                                Process processClose = pbProcessClose.start();
-                                int exitCodeClose = processClose.waitFor();
+                            ProcessBuilder pbProcessClose = new ProcessBuilder("bash", "-c", "cd " + EXEC_DIRECTORY + " && " + commandDeploy);
+                            pbProcessClose.inheritIO(); // Affiche aussi la sortie de cette commande dans le terminal
+                            Process processClose = pbProcessClose.start();
+                            int exitCodeClose = processClose.waitFor();
                 
-                                if (exitCodeClose == 0) {
-                                    System.out.println();
-                                    System.out.print("Le diary et les Daemons on été fermés.");
-                                } else {
-                                    System.out.println();
-                                    System.out.println("Erreur lors de la fermeture du diary et des daemons.");
-                                }
+                            if (exitCodeClose == 0) {
+                                System.out.println();
+                                System.out.println("Le diary et les Daemons on été fermés.");
+                            } else {
+                                System.out.println();
+                                System.out.println("Erreur lors de la fermeture du diary et des daemons.");
+                            }
                         } catch (Exception e) {
                             System.out.print(" ");
-                            System.err.println("Erreur lors du lancement de " + e.getMessage());
+                            System.err.println("Erreur lors de la fermeture de " + e.getMessage());
                             e.printStackTrace();
                         }
                     }
@@ -137,7 +177,7 @@ public class Console {
     
     }
 
-    public void executeDeploy(String clientGroup) {
+    public void executeDeploy(String clientGroup) throws Exception {
         try {
             System.out.print("Le diary et les Daemons se lancent...\n");
             // Construire la commande pour déployer avec le groupe de clients choisi
@@ -147,14 +187,41 @@ public class Console {
             Process processDeploy = pbDeploy.start();
             int exitCodeDeploy = processDeploy.waitFor();
 
-            if (exitCodeDeploy == 0) {
-                System.out.println("Le diary et les Daemons tournent.");
-            } else {
-                System.out.println("Lancement du diary ou des daemons a échoué.\n");
+            if (exitCodeDeploy != 0) {
+                System.out.println("Lancement du diary ou des daemons a échoué.");
+            } 
+            
+            // Vérifier si le DiaryImpl est lancé sur le serveur
+            Process processDiaryCheck = new ProcessBuilder("ssh", "user@server", "pgrep", "-f", "DiaryImpl").start();
+            int diaryExitCode = processDiaryCheck.waitFor();
+            System.out.println(diaryExitCode);
+            // Vérifier si les Daemons sont lancés sur les clients
+            Process processDaemonCheck = new ProcessBuilder("ssh", "user@client", "pgrep", "-f", "DaemonImpl").start();
+            int daemonExitCode = processDaemonCheck.waitFor();
+            if (daemonExitCode != 255) {
+                throw new Exception("Un ou plusieurs Daemons n'ont pas démarré correctement.");
             }
         } catch (Exception e) {
-            System.err.println("Erreur lors du lancement de " + e.getMessage());
-            e.printStackTrace();
+            
+            try {
+                String commandDeploy = "make -s close";
+                ProcessBuilder pbProcessClose = new ProcessBuilder("bash", "-c", "cd " + EXEC_DIRECTORY + " && " + commandDeploy);
+                pbProcessClose.inheritIO(); // Affiche aussi la sortie de cette commande dans le terminal
+                Process processClose = pbProcessClose.start();
+                int exitCodeClose = processClose.waitFor();
+    
+                if (exitCodeClose != 0) {
+                    System.out.println();
+                    throw new Exception("Erreur lors de la fermeture du diary et des daemons.");
+                }
+            } catch (Exception ex) {
+                System.out.print(" ");
+                System.err.println(ex.getMessage());
+                e.printStackTrace();
+            }
+
+            throw new Exception("Erreur lors du déploiement: " + e.getMessage());
+
         }
     }
 
@@ -171,9 +238,7 @@ public class Console {
             if (exitCodeDownloader == 0) {
                 System.out.print("--------------------------------------");
                 System.out.println();
-                System.out.println("Téléchargement du fichier " + fileName + " terminé.");
             } else {
-                System.out.print("--------------------------------------");
                 System.out.println();
                 System.out.println("Erreur lors du téléchargement du fichier.");
             }

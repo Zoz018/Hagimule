@@ -3,6 +3,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.rmi.Naming;
@@ -36,6 +37,20 @@ public class Downloader extends Thread {
         this.start = start;
         this.end = end;
         this.outputFile = outputFile;
+    }
+
+    // Calcul du checksum CRC32 du fichier
+    public static long calculateFileCRC32(String nameFile, String Directory) throws IOException {
+        File file = new File(Directory, nameFile);
+        Checksum checksum = new CRC32();
+        try (InputStream inputStream = new FileInputStream(file)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                checksum.update(buffer, 0, bytesRead);
+            }
+        }
+        return checksum.getValue();
     }
 
     /**
@@ -130,20 +145,20 @@ public class Downloader extends Thread {
                 thread.join(); // Bloque jusqu'à la fin du thread
             }
 
-            long endTime = System.nanoTime();
-            long tempsTelechargement = endTime - startTime;
-            System.out.println("Temps écoulé pour télécharger le fichier : " + tempsTelechargement / 1_000_000 + " ms");
-
-            if (outputFile.length() == fileSize) {
-                System.out.println("Fichier téléchargé dans son intégralité !");
+            long checkSumAttendu = calculateFileCRC32(fileName, FILE_DIRECTORY);
+            long checkSumTelecharge = calculateFileCRC32(fileName, TL_DIRECTORY);
+            
+            if ((checkSumAttendu - checkSumTelecharge < 0.1)&&(outputFile.length() == fileSize)){
+                long endTime = System.nanoTime();
+                long tempsTelechargement = endTime - startTime;
+                System.out.println("Temps écoulé pour télécharger le fichier : " + tempsTelechargement / 1_000_000 + " ms");
             } else {
-                System.out.println("Erreur lors du téléchargement : le fichier n'est pas téléchargé dans son intégralité ... ");
-            }
-
+                throw new Exception("Erreur lors du téléchargement du fichier. ");
+            } 
 
         } catch (Exception e) {
-            System.err.println("Erreur lors du téléchargement : " + e.getMessage());
-            e.printStackTrace();
+            System.out.println();
+            System.err.println(e.getMessage());
         }
     }
 }
