@@ -4,6 +4,7 @@ import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.logging.FileHandler;
 
 public class Daemon {
@@ -19,7 +20,11 @@ public class Daemon {
      * Méthode pour démarrer le daemon et écouter les requêtes sur le port spécifié.
      * @param port Le port sur lequel le daemon doit écouter.
      */
-    public void run(int port) {
+    public void run(int port, DiaryInterface diary, String clientName) {
+        // Lancer un thread pour surveiller l'entrée du terminal (permet de gérer la deconnexion)
+        Thread inputThread = new Thread(() -> monitorInput(diary, clientName));
+        inputThread.start();
+
         try (ServerSocket serverSocket = new ServerSocket(port)) { 
             System.out.println("Daemon is running on port " + port);
 
@@ -28,10 +33,39 @@ public class Daemon {
                 System.out.println("Connection established with client: " + clientSocket.getInetAddress());
                 
                 new Thread(() -> handleClient(clientSocket)).start(); // Crée un thread pour gérer chaque client individuellement
+
+                Scanner scanner = new Scanner(System.in);
+                String input = scanner.nextLine(); 
+
+                if (input.equals("q")) {
+                    diary.unregistredClient(clientName);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Méthode pour surveiller l'entrée du terminal.
+     * Si l'utilisateur entre 'q', cela arrête le daemon et retire le client de l'annuaire.
+     */
+    private void monitorInput(DiaryInterface diary, String clientName) {
+        Scanner scanner = new Scanner(System.in);
+        boolean running = true;
+        while (running) {
+            String input = scanner.nextLine(); 
+            if (input.equals("q")) {
+                try {
+                    diary.unregistredClient(clientName);  // Retirer le client de l'annuaire
+                    System.out.println("Client " + clientName + " a été retiré de l'annuaire.");
+                    running = false;  // Arrêter le daemon
+                } catch (Exception e) {
+                    System.err.println("Erreur lors du retrait du client : " + e.getMessage());
+                }
+            }
+        }
+        scanner.close();  // Ferme le scanner après usage
     }
 
     /**
@@ -137,7 +171,7 @@ public class Daemon {
 
             // Lance le daemon pour écouter les requêtes sur le port spécifié
             Daemon daemon = new Daemon();
-            daemon.run(PORT);
+            daemon.run(PORT, diary,clientName);
             //
 
         } catch (Exception e) {

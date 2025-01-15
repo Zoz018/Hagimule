@@ -44,6 +44,23 @@ public class DiaryImpl extends UnicastRemoteObject implements DiaryInterface {
         System.out.println(fileRegistry);
     }
 
+     // Méthode pour retirer un client de tous les fichiers de l'annuaire
+     public void unregistredClient(String clientToRemove) throws RemoteException {
+        for (Map.Entry<String, Map.Entry<List<String>, Long>> entry : fileRegistry.entrySet()) {
+            List<String> clientList = entry.getValue().getKey();
+            
+            // Vérifie si le client est présent dans la liste des clients
+            if (clientList.contains(clientToRemove)) {
+                // Retirer le client de la liste
+                clientList.remove(clientToRemove);
+                System.out.println("Client " + clientToRemove + " retiré de l'annuaire pour le fichier : " + entry.getKey());
+                
+                // Met à jour l'annuaire avec la nouvelle liste de clients
+                entry.getValue().setValue((long) clientList.size()); // Vous pouvez mettre à jour la taille du fichier si nécessaire
+            }
+        }
+    }
+
     @Override
     public List<String> getClients(String fileName) {
         // Retourne la liste des clients pour un fichier donné, ou une liste vide si le fichier n'existe pas.

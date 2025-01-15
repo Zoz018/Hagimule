@@ -15,4 +15,6 @@ public interface DiaryInterface extends Remote {
     //Méthode qui récupère la taille d'un fichier
     long getFileSize(String fileName) throws RemoteException;
 
+    void unregistredClient(String clientsToRemove) throws RemoteException;
+
 }

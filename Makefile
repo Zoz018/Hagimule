@@ -38,7 +38,7 @@ CURRENT ?= arryn
 STORAGE_DL ?= FichierTL/
 
 # Latence à appliquer aux communications réseau (en ms)
-LATENCY ?= 10
+LATENCY ?= 100
 
 # Taille des paquets de données envoyés (en octets)
 PACKET_SIZE ?= 1024
